@@ -244,6 +244,9 @@ phasedef *phases = NULL;
 int numphases = 0;
 int *remaps = NULL;
 int  dirpage = 0;                       /* direct page used (default 0)      */
+int columnSize = 32;
+int opcodeOperandColumnSize = 40;
+int dataColumnSize = 32;
 char * szPrepend = NULL;                /* text to be printed before all     */
 int showhex = TRUE;
 int showaddr = TRUE;
@@ -2877,31 +2880,31 @@ switch (M)
         T = ARGBYTE(PC);
         PC++;
         if (T & 0x80)
-          strcat(buf, "PC,");
+          strcat(buf,"PC,");
         if (T & 0x40)
           {
           if (M == _r2)
-            strcat(buf, "U,");
+            strcat(buf,"U,");
           if (M == _r3)
-            strcat(buf, "S,");
+            strcat(buf,"S,");
           }
         if (T&0x20)
-          strcat(buf, "Y,");
+          strcat(buf,"Y,");
         if (T & 0x10)
-          strcat(buf, "X,");
+          strcat(buf,"X,");
         if (T & 0x08)
-          strcat(buf, "DP,");
+          strcat(buf,"DP,");
         if ((T & 0x06) == 0x06)
           strcat(buf, "D,");
         else
           {
           if (T & 0x04)
-            strcat(buf, "B,");
+            strcat(buf,"B,");
           if (T & 0x02)
-            strcat(buf, "A,");
+            strcat(buf,"A,");
           }
         if (T & 0x01)
-          strcat(buf, "CC,");
+          strcat(buf,"CC,");
         if (buf[0] != '\0')
           buf[strlen(buf)-1]='\0';
         sprintf(buffer,"%-7s %s", I, buf);
@@ -3103,7 +3106,7 @@ return wf;
 
 unsigned ShowData(FILE *out, unsigned pc, int nComment)
 {
-int i, j, end, max = (nComment ? 24 : 52);
+int i, j, end, max = (nComment ? dataColumnSize : 52);
 byte wfCur, wfEnd;
 
 wfCur = ShowMemFlags(pc) &              /* get flags for current byte        */
@@ -3183,8 +3186,8 @@ else                                    /* if FCB (hex or binary)            */
     }
   }
 
-if (nComment && (24 - j > 0))           /* if comment to follow and space    */
-  fprintf(out, "%*s", 24 - j, "");      /* fill up space                     */
+if (nComment && (columnSize - j > 0))           /* if comment to follow and space    */
+  fprintf(out, "%*s", columnSize - j, "");      /* fill up space                     */
 return i - pc;                          /* and stop here                     */
 }
 
@@ -3651,7 +3654,7 @@ while (fgets(szBuf, sizeof(szBuf), fp))
           {
           *qw = *(qw + 1);
           qw++;
-          }
+      }
         }
       }
     if (*q)
@@ -4138,9 +4141,9 @@ if ((!IsFlex(f, memory, pbegin, pend, pload)) &&
     ATTRBYTE(i) |= defaultDataType;
     }
   i = fread(&memory[offset&0xFFFF],     /* read binary                       */
-            sizeof(byte),
-            0x10000-(offset&0xFFFF),
-            f);
+        sizeof(byte),
+        0x10000-(offset&0xFFFF),
+        f);
   sLoadType = "binary";
   }
 
@@ -4521,7 +4524,7 @@ while (fgets(szBuf, sizeof(szBuf), fp))
             {
             *qw = *(qw + 1);
             qw++;
-            }
+        }
           }
         }
 
@@ -4730,7 +4733,7 @@ while (fgets(szBuf, sizeof(szBuf), fp))
             {
             *qw = *(qw + 1);
             qw++;
-            }
+        }
           }
         }
 
@@ -4839,7 +4842,7 @@ while (fgets(szBuf, sizeof(szBuf), fp))
             {
             *qw = *(qw + 1);
             qw++;
-            }
+        }
           }
         }
       if (*q)
@@ -5350,7 +5353,7 @@ for (pc = 0x0000; pc <= 0xFFFF; pc++)   /* inside the used area              */
 #if RB_VARIANT
       fprintf(out, "%-24s\tEQU\t$%04X", p, pc);
 #else
-      fprintf(out, "%-7s EQU     $%04X", p, pc);
+      fprintf(out, "%-*s EQU     $%04X", columnSize - 1, p, pc);
 #endif
       if (emitComments && lcomments[pc])
         fprintf(out, "%21c %s", cCommChar, lcomments[pc]);
@@ -5386,7 +5389,7 @@ for (pc = 0x0000; pc <= 0xFFFF; pc++)
 if (pc > 0xffff)
   goto exit;
 if (defaultDataType == DATATYPE_HEX)
-  fprintf(out,"        %-7s $%04X\n\n", "ORG", pc);
+fprintf(out,"                        %-7s $%04X\n\n", "ORG", pc);
 else
   fprintf(out,"        %-7s %d\n\n", "ORG", pc);
 do
@@ -5419,9 +5422,9 @@ do
       {
       curdp = newdp;
       if (curdp >= 0)                   /* enable direct addressing          */
-        fprintf(out, "        %-7s $%02X\n\n", "SETDP", curdp);
+        fprintf(out, "                        %-7s $%02X\n\n", "SETDP", curdp);
       else                              /* disable direct addressing         */
-        fprintf(out, "        %-7s\n\n", "SETDP");
+        fprintf(out, "                        %-7s\n\n", "SETDP");
       }
     }
 
@@ -5431,9 +5434,9 @@ do
     {
     curphase = newphase;
     if (curphase >= 0)
-        fprintf(out, "        %-7s $%02X\n\n", "PHASE", phases[curphase].phase);
+        fprintf(out, "                        %-7s $%02X\n\n", "PHASE", phases[curphase].phase);
       else                              /* disable direct addressing         */
-        fprintf(out, "        %-7s\n\n", "DEPHASE");
+        fprintf(out, "                        %-7s\n\n", "DEPHASE");
     }
   }
   
@@ -5467,12 +5470,12 @@ do
     if (cLblDelim != ' ')
       llen += fprintf(out, "%c", cLblDelim);
     llen += fprintf(out, " ");
-    if (llen < 8)
-      llen += fprintf(out, "%-*s", 8 - llen, "");
+    if (llen < columnSize)
+      llen += fprintf(out, "%-*s", columnSize - llen, "");
 #endif
     }
   else
-    llen = fprintf(out, "%-*s ", 7, "");
+    llen = fprintf(out, "%-*s ", columnSize - 1, "");
 
   if (IS_CONST(pc) || IS_DATA(pc))
     {
@@ -5484,7 +5487,7 @@ do
     add = Dasm(buf, pc);
   
     if (nComment || lcomments[pc])
-      llen += fprintf(out,"%-32s",buf);
+      llen += fprintf(out,"%-*s", opcodeOperandColumnSize, buf);
     else
       llen += fprintf(out,"%s",buf);
     }
@@ -5537,11 +5540,11 @@ do
 
   if (curphase >= 0 &&                  /* phase definition change?          */
       curphase != GetPhaseDef((word)pc))
-    fprintf(out, "\n        %-*s\n\n", 7, "DEPHASE");
+    fprintf(out, "\n                        %-*s\n\n", 7, "DEPHASE");
 
   if ((pc < 0x10000) &&                 /* only if still in range,           */
       (!IS_USED(pc - 1)))               /* if we DID skip something set ORG  */
-    fprintf(out, "\n        %-*s $%04X \n\n", 7, "ORG", pc);
+    fprintf(out, "\n                        %-*s $%04X \n\n", 7, "ORG", pc);
 
 #if RB_VARIANT
   /* RB: divider bar after jumps and jumpalikes */
@@ -5552,14 +5555,14 @@ do
 
 fprintf(out, "\n");
 if (load != -1)
-  fprintf(out, "        %-7s %s\n", "END",
+  fprintf(out, "                        %-7s %s\n", "END",
           label_string((word)load, 1, (word)load));
 else
-  fprintf(out, "        END\n");
+  fprintf(out, "                        END\n");
 
 exit:
 if (outname && out)
-  fclose(out);
+    fclose(out);
 if (memory)
   free(memory);
 if (label)
