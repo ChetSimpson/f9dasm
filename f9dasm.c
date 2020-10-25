@@ -269,6 +269,7 @@ char cLblDelim = ' ';
 int emitComments = TRUE;
 byte defaultDataType = DATATYPE_HEX;
 int usefcc = TRUE;
+int autofcc = FALSE;
 int showIndexedModeZeroOperand = FALSE;
 char *fname = NULL, *outname = NULL, *infoname = NULL;
 unsigned begin = 0xffff, end = 0, offset = 0;
@@ -315,6 +316,8 @@ enum                                    /* available options                 */
   OPTION_6800,
   OPTION_HELP,
   OPTION_6801,
+  OPTION_AUTOFCC,
+  OPTION_NOAUTOFCC,
   OPTION_FCC,
   OPTION_NOFCC,
   OPTION_OMITZERO,
@@ -365,6 +368,8 @@ static struct
   { "6808",      OPTION_6800 },
   { "6809",      OPTION_6809 },
   { "help",      OPTION_HELP },
+  { "autofcc",   OPTION_AUTOFCC },
+  { "noautofcc", OPTION_NOAUTOFCC },
   { "fcc",       OPTION_FCC },
   { "nofcc",     OPTION_NOFCC },
   { "omitzero",  OPTION_OMITZERO },
@@ -3082,7 +3087,8 @@ else
     if (IS_CHAR(pc))
 #endif
   {
-  if ((memory[pc] >= 0x20) &&
+  if (autofcc &&
+	  (memory[pc] >= 0x20) &&
       (memory[pc] <= 0x7e) &&
       (memory[pc] != '&') &&
       (memory[pc] != '\"') &&
@@ -3526,6 +3532,12 @@ switch (j)
     break;
   case OPTION_NOCOMMENT :
     emitComments = FALSE;
+    break;
+  case OPTION_AUTOFCC :
+    autofcc = TRUE;
+    break;
+  case OPTION_NOAUTOFCC:
+    autofcc = FALSE;
     break;
   case OPTION_FCC :
     usefcc = TRUE;
