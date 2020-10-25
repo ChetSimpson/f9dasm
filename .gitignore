@@ -2,3 +2,6 @@
 /f9dasm
 /hex2bin
 /mot2bin
+/VS2017/.vs
+/VS2017/Release
+/VS2017/Debug
